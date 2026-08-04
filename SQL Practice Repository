@@ -1,0 +1,44 @@
+Q1. Find top 5 customers by total purchase amount
+
+SELECT customer_id, SUM(amount) AS total_spent
+FROM orders
+GROUP BY customer_id
+ORDER BY total_spent DESC
+LIMIT 5;
+
+Statement: This query groups orders by customer, sums their spending, and returns the top 5 spenders.
+
+
+Q2. Calculate average order value per month
+
+SELECT DATE_TRUNC('month', order_date) AS month,
+       AVG(amount) AS avg_order_value
+FROM orders
+GROUP BY DATE_TRUNC('month', order_date)
+ORDER BY month;
+
+Statement: This query calculates the average order value for each month, useful for trend analysis.
+
+
+Q3. Find conversion rate by campaign
+
+SELECT campaign_id,
+       COUNT(CASE WHEN converted = TRUE THEN 1 END) * 100.0 / COUNT(*) AS conversion_rate
+FROM campaign_data
+GROUP BY campaign_id;
+
+Statement: This query measures how many users converted per campaign, expressed as a percentage.
+
+
+Q4. Identify employees with salaries above department average
+
+SELECT e.employee_id, e.name, e.salary, e.department_id
+FROM employees e
+JOIN (
+    SELECT department_id, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
+) d ON e.department_id = d.department_id
+WHERE e.salary > d.avg_salary;
+
+Statement: This query compares each employee’s salary to their department’s average and returns those earning above average.
