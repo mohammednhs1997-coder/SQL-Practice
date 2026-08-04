@@ -7,3 +7,14 @@ ORDER BY total_spent DESC
 LIMIT 5;
 
 Statement: This query groups orders by customer, sums their spending, and returns the top 5 spenders.
+
+
+Q2. Calculate average order value per month
+
+SELECT DATE_TRUNC('month', order_date) AS month,
+       AVG(amount) AS avg_order_value
+FROM orders
+GROUP BY DATE_TRUNC('month', order_date)
+ORDER BY month;
+
+Statement: This query calculates the average order value for each month, useful for trend analysis.
