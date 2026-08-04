@@ -42,3 +42,22 @@ JOIN (
 WHERE e.salary > d.avg_salary;
 
 Statement: This query compares each employee’s salary to their department’s average and returns those earning above average.
+
+
+Q5. Find top 3 selling products per category
+
+SELECT category_id, product_id, SUM(quantity) AS total_sold
+FROM order_items
+GROUP BY category_id, product_id
+QUALIFY ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY SUM(quantity) DESC) <= 3;
+
+Statement: Uses window functions to rank products by sales within each category and return the top 3.
+
+Q6. Calculate customer lifetime value (LTV)
+
+SELECT customer_id, SUM(amount) AS lifetime_value
+FROM orders
+GROUP BY customer_id
+ORDER BY lifetime_value DESC;
+
+Statement: Aggregates all purchases per customer to calculate their lifetime value.
