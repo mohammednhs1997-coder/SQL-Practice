@@ -1,0 +1,299 @@
+Second highest salary
+
+SELECT MAX(salary) AS SecondHighest
+FROM Employees
+WHERE salary < (SELECT MAX(salary) FROM Employees);
+
+Find duplicate records
+
+SELECT column_name, COUNT(*)
+FROM TableName
+GROUP BY column_name
+HAVING COUNT(*) > 1;
+
+Remove duplicate records
+
+DELETE FROM TableName
+WHERE rowid NOT IN (
+  SELECT MIN(rowid)
+  FROM TableName
+  GROUP BY column_name
+);
+
+Top 5 highest salaries
+
+SELECT *
+FROM Employees
+ORDER BY salary DESC
+LIMIT 5;
+
+Nth highest salary
+
+SELECT DISTINCT salary
+FROM Employees e1
+WHERE N-1 = (
+  SELECT COUNT(DISTINCT salary)
+  FROM Employees e2
+  WHERE e2.salary > e1.salary
+);
+
+Department salary expenditure
+
+SELECT department_id, SUM(salary) AS TotalSalary
+FROM Employees
+GROUP BY department_id;
+
+Employees joined last 6 months
+
+SELECT *
+FROM Employees
+WHERE join_date >= DATEADD(MONTH, -6, GETDATE());
+
+Employees not in any department
+
+SELECT *
+FROM Employees
+WHERE department_id IS NULL;
+
+Employee count per department
+
+SELECT department_id, COUNT(*) AS EmployeeCount
+FROM Employees
+GROUP BY department_id;
+
+Department-wise employee count  
+(same as #9, but often asked differently)
+
+SELECT department_id, COUNT(employee_id) AS EmployeeCount
+FROM Employees
+GROUP BY department_id;
+
+Unpivot data  
+(SQL Server example using UNPIVOT)
+
+SELECT EmployeeID, Attribute, Value
+FROM Employees
+UNPIVOT (
+  Value FOR Attribute IN (Salary, Bonus, Allowance)
+) AS Unpivoted;
+
+Month-over-month revenue growth
+
+SELECT month,
+       revenue,
+       (revenue - LAG(revenue) OVER (ORDER BY month)) / LAG(revenue) OVER (ORDER BY month) * 100 AS MoM_Growth
+FROM RevenueTable;
+
+Running total of sales by date
+
+SELECT sale_date,
+       SUM(amount) OVER (ORDER BY sale_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS RunningTotal
+FROM Sales;
+
+Find gaps in a sequence of numbers
+
+SELECT t1.num + 1 AS GapStart, t2.num - 1 AS GapEnd
+FROM Numbers t1
+JOIN Numbers t2 ON t1.num + 1 = t2.num
+WHERE t2.num - t1.num > 1;
+
+
+Longest streak of consecutive login days
+
+SELECT user_id,
+       MAX(StreakLength) AS LongestStreak
+FROM (
+  SELECT user_id,
+         COUNT(*) AS StreakLength
+  FROM (
+    SELECT user_id,
+           login_date,
+           ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date) - 
+           DATEDIFF(DAY, '1900-01-01', login_date) AS grp
+    FROM Logins
+  ) t
+  GROUP BY user_id, grp
+) s
+GROUP BY user_id;
+
+First login date of each user
+
+SELECT user_id, MIN(login_date) AS FirstLogin
+FROM Logins
+GROUP BY user_id;
+
+Last purchase of each customer
+
+SELECT customer_id, MAX(purchase_date) AS LastPurchase
+FROM Purchases
+GROUP BY customer_id;
+
+Customers who bought in all months
+
+SELECT customer_id
+FROM Purchases
+GROUP BY customer_id
+HAVING COUNT(DISTINCT MONTH(purchase_date)) = (SELECT COUNT(DISTINCT MONTH(purchase_date)) FROM Purchases);
+
+Products never ordered
+
+SELECT p.product_id, p.product_name
+FROM Products p
+LEFT JOIN Orders o ON p.product_id = o.product_id
+WHERE o.product_id IS NULL;
+
+Employees earning more than average salary
+
+SELECT *
+FROM Employees
+WHERE salary > (SELECT AVG(salary) FROM Employees);
+
+Employees earning more than department average
+
+SELECT e.*
+FROM Employees e
+JOIN (
+  SELECT department_id, AVG(salary) AS DeptAvg
+  FROM Employees
+  GROUP BY department_id
+) d ON e.department_id = d.department_id
+WHERE e.salary > d.DeptAvg;
+
+Rank employees within each department by salary
+
+SELECT employee_id, department_id, salary,
+       RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS RankInDept
+FROM Employees;
+
+Top 3 salaries in each department
+
+SELECT employee_id, department_id, salary
+FROM (
+  SELECT employee_id, department_id, salary,
+         DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS SalaryRank
+  FROM Employees
+) t
+WHERE SalaryRank <= 3;
+
+Common records between two tables
+
+SELECT *
+FROM TableA
+INTERSECT
+SELECT *
+FROM TableB;
+
+Records in one table but not another
+
+SELECT *
+FROM TableA
+EXCEPT
+SELECT *
+FROM TableB;
+
+Split full name into first and last name  
+(MySQL example)
+
+SELECT SUBSTRING_INDEX(full_name, ' ', 1) AS FirstName,
+       SUBSTRING_INDEX(full_name, ' ', -1) AS LastName
+FROM Employees;
+
+Concatenate first and last name
+
+SELECT CONCAT(first_name, ' ', last_name) AS FullName
+FROM Employees;
+
+Extract year, month, day from date
+
+SELECT EXTRACT(YEAR FROM hire_date) AS Year,
+       EXTRACT(MONTH FROM hire_date) AS Month,
+       EXTRACT(DAY FROM hire_date) AS Day
+FROM Employees;
+
+Calculate age from date of birth  
+(SQL Server example)
+
+SELECT employee_id,
+       DATEDIFF(YEAR, date_of_birth, GETDATE()) AS Age
+FROM Employees;
+
+Number of working days in a month  
+(Assuming weekends are non‑working)
+
+SELECT COUNT(*) AS WorkingDays
+FROM Calendar
+WHERE MONTH(date) = 8 AND YEAR(date) = 2026
+  AND DATENAME(WEEKDAY, date) NOT IN ('Saturday', 'Sunday');
+
+Employees with the same salary
+
+SELECT salary, COUNT(*) AS CountEmployees
+FROM Employees
+GROUP BY salary
+HAVING COUNT(*) > 1;
+
+Highest paid employee in each department
+
+SELECT department_id, employee_id, salary
+FROM Employees e
+WHERE salary = (
+  SELECT MAX(salary)
+  FROM Employees
+  WHERE department_id = e.department_id
+);
+
+
+All managers and their reporting employees
+
+SELECT m.employee_id AS ManagerID, e.employee_id AS EmployeeID
+FROM Employees e
+JOIN Employees m ON e.manager_id = m.employee_id;
+
+
+All employees who are managers
+
+SELECT DISTINCT manager_id
+FROM Employees
+WHERE manager_id IS NOT NULL;
+
+Frequency of each word in a text column  
+(Requires string split function — SQL Server example)
+
+SELECT word, COUNT(*) AS Frequency
+FROM (
+  SELECT value AS word
+  FROM TextTable
+  CROSS APPLY STRING_SPLIT(text_column, ' ')
+) t
+GROUP BY word;
+
+Records where a column is NULL
+
+SELECT *
+FROM Employees
+WHERE department_id IS NULL;
+
+Replace NULL values with default
+
+SELECT ISNULL(department_id, 'Not Assigned') AS Department
+FROM Employees;
+
+Trim spaces from string
+
+SELECT LTRIM(RTRIM(employee_name)) AS TrimmedName
+FROM Employees;
+
+Most frequently ordered product
+
+SELECT product_id, COUNT(*) AS OrderCount
+FROM Orders
+GROUP BY product_id
+ORDER BY OrderCount DESC
+LIMIT 1;
+
+Year-over-year growth
+
+SELECT year,
+       revenue,
+       (revenue - LAG(revenue) OVER (ORDER BY year)) / LAG(revenue) OVER (ORDER BY year) * 100 AS YoY_Growth
+FROM RevenueTable;
